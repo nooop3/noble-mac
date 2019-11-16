@@ -43,9 +43,10 @@
     emit.ScanState(false);
 }
 
-- (void) centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI {
+- (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI {
     std::string uuid = getUuid(peripheral);
 
+    // NSLog(@"%@", advertisementData);
     Peripheral p;
     p.address = getAddress(uuid, &p.addressType);
     IF(NSNumber*, connect, [advertisementData objectForKey:CBAdvertisementDataIsConnectable]) {
@@ -63,6 +64,7 @@
         p.txPowerLevel = std::make_pair([txLevel intValue], true);
     }
     IF(NSData*, data, [advertisementData objectForKey:CBAdvertisementDataManufacturerDataKey]) {
+        NSLog(@"Value = %@, length = %lu", data, [data length]);
         const UInt8* bytes = (UInt8 *)[data bytes];
         std::get<0>(p.manufacturerData).assign(bytes, bytes+[data length]);
         std::get<1>(p.manufacturerData) = true;
@@ -140,11 +142,10 @@
     return NO;
 }
 
-- (void)peripheralDidUpdateRSSI:(CBPeripheral *)peripheral error:(NSError *)error {
+- (void)didReadRSSI:(CBPeripheral *) peripheral didReadRSSI:(NSNumber *) RSSI error:(NSError *)error {
     std::string uuid = getUuid(peripheral);
-    NSNumber* rssi = peripheral.RSSI;
-    if(!error && rssi) {
-        emit.RSSI(uuid, [rssi longValue]);
+    if(!error && RSSI) {
+        emit.RSSI(uuid, [RSSI longValue]);
     }
 }
 
